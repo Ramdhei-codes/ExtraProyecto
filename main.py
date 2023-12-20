@@ -1,6 +1,8 @@
 import os
 import curses
 import json
+import pyphi
+import time
 
 def listar_archivos_json(ruta):
     archivos_json = [archivo for archivo in os.listdir(ruta) if archivo.endswith(".json")]
@@ -48,10 +50,21 @@ def procesar_archivo_json(archivo_seleccionado):
     with open(archivo_seleccionado, 'r') as archivo:
         contenido_json = json.load(archivo)
 
-    # Mostrar los pares clave-valor en la consola
-    print(f"Contenido del archivo JSON {archivo_seleccionado}:")
-    for clave, valor in contenido_json.items():
-        print(f"{clave}: {valor}")
+    operaciones_pyphi(contenido_json)
+    
+def operaciones_pyphi(archivo):
+    tiempo_inicio = time.time()
+    pyphi.config.load_file('pyphi_config.yml')
+    network = pyphi.Network(archivo["tpm"], cm=archivo["cm"], node_labels=archivo["labels"])
+    subsystem = pyphi.Subsystem(network, archivo["state"], nodes=(0, 1, 2))
+    mechanism = (0,1,2)
+    purview = (0,1,2)
+    mip = subsystem.effect_mip(mechanism, purview)
+    print(mip.partition)
+    print(mip.phi) 
+    tiempo_final = time.time()
+    tiempo_total = tiempo_final - tiempo_inicio
+    print("Tiempo de ejecución: ", tiempo_total)
 
 if __name__ == "__main__":
     curses.wrapper(main)
